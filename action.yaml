@@ -1,0 +1,17 @@
+name: 'Go Test Summary'
+description: 'Run `go test` and format the output into the github action summary.'
+inputs:
+  arguments:
+    description: 'Arguments to `go test`, `-json` and `-cover` are required and always included'
+    required: false
+    default: './... -count=1'
+  hideUntestedPackages:
+    description: 'Do not render packages which have no tests (but count them)'
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: run go-test-summary
+      shell: bash
+      run: go run ./main.go
