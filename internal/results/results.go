@@ -1,6 +1,7 @@
 package results
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 type TestingResults struct {
 	ModuleName     string
 	PackageResults []PackageResult
+	NonTestOutput  string
 }
 
 type PackageResult struct {
@@ -85,23 +87,25 @@ func (t *PackageResult) enumerateResults() {
 // GetTestResults is currently the function which runs 'go test' and captures the output.  Right now it also then calls
 // the parse of that output *and additionally* re-arranges that output into a more useful format.  The enumeration of
 // results into a more useful format should really be put in a different function...
-func GetTestResults() TestingResults {
+func GetTestResults() (TestingResults, int) {
 	var testingResults TestingResults
 	var packageResults []PackageResult
+	var exitCode int
 	coverageRegexp, _ := regexp.Compile("^coverage: (.+)\n$")
 
-	output, _ := exec.Command("go", "test", "-json", "-count=1", "./...", "-cover").CombinedOutput()
 	// TODO: Support arguments?
-	// TODO: Move execution out to a runner, capture the exit code, exit this own process right at the end based on that exit code.
+	output, err := exec.Command("go", "test", "-json", "-count=1", "./...", "-cover").CombinedOutput()
 
 	// It may seem odd to not care about the error output here, but we are trying to capture the test output here - if we fatal error because
 	// the process reported an exit code then we may not correctly interpret the test output.
 
-	// if err != nil {
-	//	log.Fatal(err)
-	// }
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		exitCode = ee.ExitCode()
+		println("Tests exited with code error:", ee.ExitCode()) // ran, but non-zero exit code
+	}
 
-	allEvents := events.ParseTestOutput(string(output))
+	allEvents, nonTestOutput := events.ParseTestOutput(string(output))
 
 	// TODO: Move this loop to a different function
 	for _, event := range allEvents {
@@ -133,5 +137,6 @@ func GetTestResults() TestingResults {
 	}
 	testingResults.getModuleName() // TODO: This should be called automatically when this object is instantiated.
 	testingResults.PackageResults = packageResults
-	return testingResults
+	testingResults.NonTestOutput = nonTestOutput
+	return testingResults, exitCode
 }

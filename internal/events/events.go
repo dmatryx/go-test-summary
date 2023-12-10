@@ -2,7 +2,6 @@ package events
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 	"time"
 )
@@ -26,15 +25,17 @@ var TestStatusResults = []string{
 	"fail",
 	"skip"}
 
-func ParseTestOutput(output string) []TestEvent {
+func ParseTestOutput(output string) ([]TestEvent, string) {
 	var events []TestEvent
+	var nonTestOutput []string
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		var event TestEvent
 		if len(line) > 0 {
 			err := json.Unmarshal([]byte(line), &event)
 			if err != nil {
-				log.Fatal(err)
+				nonTestOutput = append(nonTestOutput, line)
+				println(line)
 			}
 			if event.Test == "" {
 				event.PackageLevel = true
@@ -53,5 +54,5 @@ func ParseTestOutput(output string) []TestEvent {
 			events = append(events, event)
 		}
 	}
-	return events
+	return events, strings.Join(nonTestOutput, "\n")
 }

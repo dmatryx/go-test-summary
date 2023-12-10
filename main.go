@@ -18,7 +18,10 @@ func main() {
 		hideUntestedPackages = false
 	}
 
+	testResults, exitCode := results.GetTestResults()
 	// Establish the renderer with test results, and have it output
-	markdownRenderer := renderer.Renderer{results.GetTestResults(), hideUntestedPackages}
+	markdownRenderer := renderer.Renderer{testResults, hideUntestedPackages}
 	markdownRenderer.Render()
+
+	os.Exit(exitCode)
 }

@@ -51,9 +51,12 @@ func (t *Renderer) getPackageDetails() string {
 			if result.HasTests() {
 				testSummaries += "<details><summary>" + t.testIcon("test") + " Tests</summary><ul>"
 				for s, testResult := range result.Tests {
-					testSummaries += "<li>" + t.testIcon(testResult.TestStatusResult) + "<code>" + s + "</code></li>"
+
 					if len(testResult.Subtests) > 0 {
+						// If there are subtests, show this as a collapseable summary section
+						testSummaries += fmt.Sprintf("<li><details><summary>%s<code>%s</code> <small>(%d subtests)</small></summary>", t.testIcon(testResult.TestStatusResult), s, len(testResult.Subtests))
 						keys := []string{}
+
 						for key := range testResult.Subtests {
 							keys = append(keys, key)
 						}
@@ -63,7 +66,10 @@ func (t *Renderer) getPackageDetails() string {
 							key := keys[i]
 							testSummaries += "<li>" + t.testIcon(testResult.Subtests[key].TestStatusResult) + "<code>" + key + "</code></li>"
 						}
-						testSummaries += "</ul>"
+						testSummaries += "</ul></details></li>"
+					} else {
+						// If there are no subtests, show this as a bullet point
+						testSummaries += "<li>" + t.testIcon(testResult.TestStatusResult) + "<code>" + s + "</code></li>"
 					}
 				}
 				testSummaries += "</ul></details>"
@@ -140,6 +146,16 @@ func (t *Renderer) getSummaryText() string {
 	return summaryText
 }
 
+func (t *Renderer) getPreAndPostOutputText() string {
+	var output string
+	if len(t.TestResults.NonTestOutput) > 0 {
+		output += "<small><details><summary><code>Non Test Output</code></summary>\n\n" +
+			"```" + t.TestResults.NonTestOutput + "\n```\n\n" +
+			"</details></small>"
+	}
+	return output
+}
+
 func (t *Renderer) Header(headerLevel int, headerText string) string {
 	output := " " + headerText + "\n\n"
 	for i := 0; i < headerLevel; i++ {
@@ -151,12 +167,22 @@ func (t *Renderer) Header(headerLevel int, headerText string) string {
 func (t *Renderer) Render() {
 	output := t.Header(2, t.testIcon("results")+" Test summary")
 	output += t.Header(3, "`"+t.TestResults.ModuleName+"`")
+	output += t.getPreAndPostOutputText()
 	output += t.getSummaryText()
 	output += t.getPackageDetails()
 	// Output a table of the package results
 	outputFile := os.Getenv("GITHUB_STEP_SUMMARY")
-	err := os.WriteFile(outputFile, []byte(output), 0666)
+
+	// If the file doesn't exist, create it, or append to the file
+	f, err := os.OpenFile(outputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := f.Write([]byte(output)); err != nil {
+		f.Close() // ignore error; Write error takes precedence
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
