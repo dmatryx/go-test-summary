@@ -45,6 +45,24 @@ jobs:
         run: CGO_ENABLED=0 GOOS=linux go build -o my-app-name .
 ```
 
+### Output
+
+Across these two images you can see how the collapseable sections will show/hide details - by default everything starts
+non-expanded but can toggle at a click.
+
+If you do not specify to hide untested packages, you will have yellow summary sections indicating packages without tests
+
+If you have failing tests, you can dig into the tests and output to see easily what has failed
+
+![go-test-summary-failing-verbose.png](docs%2Fgo-test-summary-failing-verbose.png)
+
+If you have no problems at all, and have passing tests, and specify to hide untested packages you'll get a more succinct
+output like this:
+
+![go-test-summary-passing-brief.png](docs%2Fgo-test-summary-passing-brief.png)
+
+Again, all sections can be toggled. Non-test output, tests, subtests, test output, and anything else that can be hidden
+will all be hidden in an expandable section waiting for you to show what you want to see.
 
 ### If you want to run this locally for some reason
 Not really designed to be run locally, but you can grab and compile the binary itself.
