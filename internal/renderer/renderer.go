@@ -150,7 +150,7 @@ func (t *Renderer) getPreAndPostOutputText() string {
 	var output string
 	if len(t.TestResults.NonTestOutput) > 0 {
 		output += "<small><details><summary><code>Non Test Output</code></summary>\n\n" +
-			"```" + t.TestResults.NonTestOutput + "\n```\n\n" +
+			"```\n" + t.TestResults.NonTestOutput + "\n```\n\n" +
 			"</details></small>"
 	}
 	return output
