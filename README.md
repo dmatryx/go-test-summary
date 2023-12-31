@@ -14,6 +14,8 @@ If the test errors, the action will return the same exit code (and the output)
 | Input | Default | Description |
 | -     | -       | -           |
 | hideUntestedPackages | `false` | Whether to minimise output for packages with no tests |
+| workingDirectory | '.' | Directory where your go.mod file is located |
+| testDirectories | '.' | If you need, you can run tests on newline separated sub-paths |
 
 ## Usage
 
@@ -39,7 +41,7 @@ jobs:
 -      - name: Run Go Test
 -        run: go test ./...
 +      - name: Go Test -> Summary
-+        uses: dmatryx/go-test-summary@v1
++        uses: dmatryx/go-test-summary@v1.1
 
       - name: Build
         run: CGO_ENABLED=0 GOOS=linux go build -o my-app-name .

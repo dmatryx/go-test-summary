@@ -5,6 +5,19 @@ inputs:
     description: 'Do not render packages which have no tests (but count them)'
     required: false
     default: "false"
+  workingDirectory:
+    description: |-
+      Path to change to before testing, for apps which need multiple co-located
+      packages tested separately, use testDirectories instead.  This *should* be
+      where your go.mod file is located.
+    required: false
+    default: "."
+  testDirectories:
+    description: |-
+      Folders (can be nested) to change to before running the test command.
+      All summary output will be collated in the summary
+    required: false
+    default: "."
 runs:
   using: composite
   steps:
@@ -12,5 +25,7 @@ runs:
       shell: bash
       env:
         INPUT_HIDEUNTESTEDPACKAGES: ${{ inputs.hideUntestedPackages }}
+        INPUT_TESTDIRECTORIES: ${{ inputs.testDirectories }}
       run:  |
+        cd ${{ inputs.workingDirectory }}
         ${{ github.action_path }}/dist/go-test-summary

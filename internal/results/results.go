@@ -87,22 +87,27 @@ func (t *PackageResult) enumerateResults() {
 // GetTestResults is currently the function which runs 'go test' and captures the output.  Right now it also then calls
 // the parse of that output *and additionally* re-arranges that output into a more useful format.  The enumeration of
 // results into a more useful format should really be put in a different function...
-func GetTestResults() (TestingResults, int) {
+func GetTestResults(testDirectories []string) (TestingResults, int) {
 	var testingResults TestingResults
 	var packageResults []PackageResult
 	var exitCode int
+	var output []byte
 	coverageRegexp, _ := regexp.Compile("^coverage: (.+)\n$")
 
 	// TODO: Support arguments?
-	output, err := exec.Command("go", "test", "-json", "-count=1", "./...", "-cover").CombinedOutput()
+	for _, directory := range testDirectories {
+		testCommand := exec.Command("go", "test", "-json", "-count=1", "./...", "-cover")
+		testCommand.Dir = directory
+		testOutput, err := testCommand.CombinedOutput()
+		output = append(output, testOutput...)
+		// It may seem odd to not care about the error output here, but we are trying to capture the test output here - if we fatal error because
+		// the process reported an exit code then we may not correctly interpret the test output.
 
-	// It may seem odd to not care about the error output here, but we are trying to capture the test output here - if we fatal error because
-	// the process reported an exit code then we may not correctly interpret the test output.
-
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
-		exitCode = ee.ExitCode()
-		println("Tests exited with code error:", ee.ExitCode()) // ran, but non-zero exit code
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			exitCode = ee.ExitCode()
+			println("Tests exited with code error:", ee.ExitCode()) // ran, but non-zero exit code
+		}
 	}
 
 	allEvents, nonTestOutput := events.ParseTestOutput(string(output))

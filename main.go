@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/dmatryx/go-test-summary/internal/renderer"
 	"github.com/dmatryx/go-test-summary/internal/results"
@@ -18,7 +19,9 @@ func main() {
 		hideUntestedPackages = false
 	}
 
-	testResults, exitCode := results.GetTestResults()
+	testDirectories := strings.Split(os.Getenv("INPUT_TESTDIRECTORIES"), "\n")
+
+	testResults, exitCode := results.GetTestResults(testDirectories)
 	// Establish the renderer with test results, and have it output
 	markdownRenderer := renderer.Renderer{testResults, hideUntestedPackages}
 	markdownRenderer.Render()
